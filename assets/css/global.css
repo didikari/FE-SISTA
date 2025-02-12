@@ -1,0 +1,8 @@
+.nuxt-icon {
+  width: 1.5em !important;
+  height: 1.5em !important;
+}
+.nuxt-icon--fill,
+.nuxt-icon--fill * {
+  fill: none !important;
+}
