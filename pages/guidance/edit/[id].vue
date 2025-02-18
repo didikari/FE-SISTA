@@ -74,18 +74,10 @@ const formSchema = toTypedSchema(
         z.string(),
       ])
       .optional(),
-    status: z.enum(["draft", "submitted"], {
-      errorMap: () => ({ message: "Please select a valid status" }),
-    }),
   })
 );
 const form = useForm({
   validationSchema: formSchema,
-});
-const { value: abstract } = useField("abstract");
-
-watch(content, (newContent) => {
-  abstract.value = newContent;
 });
 
 const handleFileChange = (event: Event, field: any) => {
@@ -119,7 +111,6 @@ onMounted(async () => {
 const onSubmit = form.handleSubmit(async (values) => {
   const formData = new FormData();
   formData.append("supervisor_id", supervisorId.value);
-  formData.append("status", values.status);
 
   if (values.proposal_file instanceof File) {
     formData.append("proposal_file", values.proposal_file);
@@ -129,7 +120,6 @@ const onSubmit = form.handleSubmit(async (values) => {
   formData.append("_method", "PATCH");
 
   const result = await updateGuidance(guidanceId.value, formData);
-
   if (result.success) {
     toast({ description: result.message });
     router.push("/guidance");
