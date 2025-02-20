@@ -45,7 +45,7 @@ const isAddDisabled = computed(() =>
 
 const handleAddClick = () => {
   if (!isAddDisabled.value) {
-    router.push("/title/create"); // Atau '/title/create' jika sesuai
+    router.push("/title/create");
   }
 };
 

@@ -118,7 +118,18 @@ onMounted(async () => {
           <TableBody>
             <TableRow v-for="(guidance, index) in guidances" :key="guidance.id">
               <TableCell>{{ index + 1 }}</TableCell>
-              <TableCell>{{ guidance.title?.title || "No Title" }}</TableCell>
+              <TableCell class="max-w-[100px] truncate">
+                <Tooltip>
+                  <TooltipTrigger as-child>
+                    <span class="truncate block">{{
+                      guidance.title?.title
+                    }}</span>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {{ guidance.title?.title }}
+                  </TooltipContent>
+                </Tooltip>
+              </TableCell>
               <TableCell>{{ guidance.supervisor?.name || "N/A" }}</TableCell>
               <TableCell>{{ guidance.status || "N/A" }}</TableCell>
               <TableCell class="flex gap-2">

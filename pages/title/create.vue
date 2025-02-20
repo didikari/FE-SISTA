@@ -16,14 +16,14 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "~/components/ui/toast";
 import { useTitle } from "~/composables/api/useTitle";
 import TiptapEditor from "~/components/TiptapEditor.vue";
-import { useSupervisorStore } from "~/stores/supervisor/supervisorStore";
+import { useLecturerStore } from "~/stores/lecturer/lecturerStore";
 
 const content = ref("");
 const { toast } = useToast();
 const router = useRouter();
-const supervisorStore = useSupervisorStore();
 const { createTitle } = useTitle();
-const { fetchSupervisors } = useSupervisor();
+const lecturerStore = useLecturerStore();
+const { fetchLecturers } = useLecturer();
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024;
 const ALLOWED_FILE_TYPES = [
@@ -32,7 +32,6 @@ const ALLOWED_FILE_TYPES = [
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 ];
 
-// Validasi dengan Zod
 const formSchema = toTypedSchema(
   z.object({
     title: z.string().min(20, "Title must be at least 20 characters"),
@@ -58,7 +57,7 @@ const form = useForm({
 const selectedFile = ref<string | null>(null);
 
 onMounted(() => {
-  fetchSupervisors();
+  fetchLecturers();
 });
 
 const { value: abstract } = useField("abstract");
@@ -134,11 +133,11 @@ const onSubmit = form.handleSubmit(async (values) => {
                 >
                   <option value="" disabled selected>Pilih Supervisor</option>
                   <option
-                    v-for="supervisor in supervisorStore.getSupervisors"
-                    :key="supervisor.id"
-                    :value="supervisor.lecturer.id"
+                    v-for="lecturer in lecturerStore.getLecturers"
+                    :key="lecturer.id"
+                    :value="lecturer.lecturer.id"
                   >
-                    {{ supervisor.name }}
+                    {{ lecturer.name }}
                   </option>
                 </select>
               </FormControl>

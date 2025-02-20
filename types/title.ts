@@ -1,3 +1,5 @@
+//types/title.ts
+
 export type Supervisor = {
   id: string;
   name: string;

@@ -1,6 +1,7 @@
 // plugins/clearStores.js
 import { useGuidanceStore } from "~/stores/guidance/guidanceStore";
 import { usePaymentStore } from "~/stores/payment/paymentStore";
+import { usePreSeminarStore } from "~/stores/preSeminar/preSeminarStore";
 import { useTitleStore } from "~/stores/title/titleStore";
 import { useUserStore } from "~/stores/user/userStore";
 
@@ -10,6 +11,7 @@ export default defineNuxtPlugin((nuxtApp) => {
     useTitleStore,
     useUserStore,
     usePaymentStore,
+    usePreSeminarStore,
   ];
 
   const clearStores = () => {

@@ -3,15 +3,15 @@ export interface Lecturer {
   user_id: number;
 }
 
-export interface Supervisor {
-  id: number;
+export interface User {
+  id: string;
   name: string;
   email: string;
   lecturer: Lecturer;
 }
 
-export interface SupervisorResponse {
+export interface UserResponse {
   code: number;
   message: string;
-  data: Supervisor[];
+  data: User[];
 }

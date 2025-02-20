@@ -1,12 +1,15 @@
+//middleware/routeProtection.ts
 import { useGuidanceStore } from "~/stores/guidance/guidanceStore";
-import { useTitleStore } from "~/stores/title/titleStore"; // Import store untuk title
+import { usePaymentStore } from "~/stores/payment/paymentStore";
+import { useTitleStore } from "~/stores/title/titleStore";
 
 export default defineNuxtRouteMiddleware((to, from) => {
   const guidanceStore = useGuidanceStore();
-  const titleStore = useTitleStore(); // Ambil store untuk title
+  const titleStore = useTitleStore();
+  const paymentStore = usePaymentStore();
 
   const guidances = computed(() => guidanceStore.guidances);
-  const titles = computed(() => titleStore.titles); // Ambil data title
+  const titles = computed(() => titleStore.titles);
 
   const isGuidanceAddDisabled = computed(() =>
     guidances.value.some((guidance) => guidance.status !== null)
@@ -16,12 +19,18 @@ export default defineNuxtRouteMiddleware((to, from) => {
     titles.value.some((title) => title.status !== null)
   );
 
-  // Cek untuk /guidance/create, akses diblokir jika ada guidance dengan status !== null
   if (to.path === "/guidance/create" && isGuidanceAddDisabled.value) {
     return navigateTo("/guidance");
   }
 
-  // Cek untuk /title/create, akses diblokir jika ada title dengan status !== null
+  if (to.path === "/pre-seminar/create" && !paymentStore.firstPayment) {
+    return navigateTo("/pre-seminar");
+  }
+
+  if (to.path === "/exam/create" && !paymentStore.allPayment) {
+    return navigateTo("/exam");
+  }
+
   if (to.path === "/title/create" && isTitleAddDisabled.value) {
     return navigateTo("/title");
   }

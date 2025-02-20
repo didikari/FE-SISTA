@@ -1,12 +1,34 @@
 <script setup lang="ts">
-import { ArrowLeft } from "lucide-vue-next";
+import { ArrowLeft, Printer } from "lucide-vue-next";
 import { Button } from "~/components/ui/button";
+import { useToast } from "~/components/ui/toast";
 import { useGuidanceStore } from "~/stores/guidance/guidanceStore";
 
-const { fetchHistories } = useGuidance();
+const { fetchHistories, printGuidance } = useGuidance();
 const guidanceStore = useGuidanceStore();
+const { toast } = useToast();
+const router = useRouter();
 
 const guidances = computed(() => guidanceStore.histories);
+const guidanceId = computed(
+  () => guidanceStore.histories[0]?.guidance_id ?? null
+);
+
+const printHandle = async () => {
+  const result = await printGuidance(guidanceId.value);
+  const data = result.data as { download_url?: string };
+  if (result.success && data?.download_url) {
+    window.open(data.download_url, "_blank");
+    toast({
+      description: result.message,
+    });
+    router.push("/guidance");
+  } else {
+    toast({
+      description: result.message,
+    });
+  }
+};
 
 onMounted(async () => {
   await fetchHistories();
@@ -27,6 +49,13 @@ onMounted(async () => {
                 <ArrowLeft class="w-6 h-6" />
               </Button>
             </RouterLink>
+            <Button
+              class="p-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              title="Print"
+              @click="printHandle"
+            >
+              <Printer class="w-6 h-6" />
+            </Button>
           </div>
         </div>
 

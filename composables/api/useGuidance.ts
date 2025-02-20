@@ -12,6 +12,7 @@ export const useGuidance = () => {
       "/guidances",
       { method: "GET" }
     );
+
     if (success && data) {
       guidanceStore.setGuidance(Array.isArray(data) ? data : [data]);
       return { success: true, message };
@@ -66,21 +67,6 @@ export const useGuidance = () => {
     }
   };
 
-  // const fetchHistoryGuidanceById = async (id: string) => {
-  //   const { success, message, data } = await apiRequest<Guidance>(
-  //     `/guidances/histories/${id}`,
-  //     {
-  //       method: "GET",
-  //     }
-  //   );
-
-  //   if (success) {
-  //     return { success, message, data };
-  //   } else {
-  //     return { success, message, data: null };
-  //   }
-  // };
-
   const updateGuidance = async (id: string, formData: FormData) => {
     const { success, message, data } = await apiRequest<Guidance>(
       `/guidances/update/${id}`,
@@ -113,13 +99,28 @@ export const useGuidance = () => {
     }
   };
 
+  const printGuidance = async (id: string) => {
+    const { success, message, data } = await apiRequest(
+      `/pdf/generate/guidance/${id}`,
+      {
+        method: "GET",
+      }
+    );
+
+    if (success && data) {
+      return { data, success: true, message: "Generate PDF successfully!" };
+    } else {
+      return { success: false, message };
+    }
+  };
+
   onMounted(() => {
     getGuidance();
   });
 
   return {
     fetchHistories,
-    // fetchHistoryGuidanceById,
+    printGuidance,
     getGuidance,
     createGuidance,
     updateGuidance,

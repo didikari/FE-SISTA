@@ -1,9 +1,9 @@
 <script setup lang="ts">
 definePageMeta({
-  name: "Edit Title",
+  name: "Edit Exam",
 });
 import { toTypedSchema } from "@vee-validate/zod";
-import { useField, useForm } from "vee-validate";
+import { useForm } from "vee-validate";
 import { onMounted, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import * as z from "zod";
@@ -18,7 +18,6 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useToast } from "~/components/ui/toast";
-import { useTitle } from "~/composables/api/useTitle";
 
 import {
   Select,
@@ -27,27 +26,30 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import TiptapEditor from "~/components/TiptapEditor.vue";
-import { useLecturerStore } from "~/stores/lecturer/lecturerStore";
 import type { User } from "~/types/lecturer";
-import type { Title } from "~/types/title";
+import { useLecturerStore } from "~/stores/lecturer/lecturerStore";
+import type { PreSeminar } from "~/types/preSeminar";
+import type { Exam } from "~/types/exam";
 
 const { toast } = useToast();
 const route = useRoute();
 const router = useRouter();
 const { fetchLecturers } = useLecturer();
-const { updateTitle, fetchTitleById } = useTitle();
+// const { fetchPreSeminarById, updatePreSeminar } = usePreSeminar();
+const { fetchExamById, updateExam } = useExam();
 
-const titleId = ref<string>(
+const examId = ref<string>(
   Array.isArray(route.params.id) ? route.params.id[0] : route.params.id
 );
+
 const loading = ref(false);
-const titleData = ref<Title | null | undefined>(undefined);
+const preSeminarData = ref<PreSeminar | null | undefined>(undefined);
+const examData = ref<Exam | null | undefined>(undefined);
 const lecturerStore = useLecturerStore();
 const lecturers = ref<User[]>([]);
 const selectedFile = ref<string | null>(null);
-const content = ref("");
 const lecturerId = ref<string>("");
+const examinerId = ref<string>("");
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024;
 const ALLOWED_FILE_TYPES = [
@@ -59,10 +61,9 @@ const ALLOWED_FILE_TYPES = [
 // Schema validasi
 const formSchema = toTypedSchema(
   z.object({
-    title: z.string().min(20, "Title must be at least 20 characters"),
-    abstract: z.string().min(2, "Abstract must be at least 500 characters"),
     supervisor_id: z.string().min(1, "Supervisor is required"),
-    proposal_file: z
+    examiner_id: z.string().min(1, "Examiner is required"),
+    exam_file: z
       .union([
         z
           .instanceof(File)
@@ -75,18 +76,10 @@ const formSchema = toTypedSchema(
         z.string(),
       ])
       .optional(),
-    status: z.enum(["draft", "submitted"], {
-      errorMap: () => ({ message: "Please select a valid status" }),
-    }),
   })
 );
 const form = useForm({
   validationSchema: formSchema,
-});
-const { value: abstract } = useField("abstract");
-
-watch(content, (newContent) => {
-  abstract.value = newContent;
 });
 
 const handleFileChange = (event: Event, field: any) => {
@@ -104,18 +97,16 @@ onMounted(async () => {
   loading.value = true;
   await fetchLecturers();
   lecturers.value = toRaw(lecturerStore.getLecturers);
-  const response = await fetchTitleById(titleId.value);
+  const response = await fetchExamById(examId.value);
 
   if (response.success) {
-    titleData.value = response.data;
-    lecturerId.value = titleData.value?.supervisor?.id ?? "";
-    content.value = titleData.value?.abstract ?? "";
+    examData.value = response.data as Exam;
+    lecturerId.value = examData.value?.supervisor?.id ?? "";
+    examinerId.value = examData.value?.examiner?.id ?? "";
     form.setValues({
-      title: titleData.value?.title ?? "",
-      abstract: titleData.value?.abstract ?? "",
       supervisor_id: lecturerId.value,
-      proposal_file: titleData.value?.proposal_file ?? "",
-      status: titleData.value?.status ?? "draft",
+      examiner_id: examinerId.value,
+      exam_file: examData.value?.exam_file ?? "",
     });
   }
   loading.value = false;
@@ -123,23 +114,20 @@ onMounted(async () => {
 
 const onSubmit = form.handleSubmit(async (values) => {
   const formData = new FormData();
-  formData.append("title", values.title);
-  formData.append("abstract", values.abstract);
   formData.append("supervisor_id", lecturerId.value);
-  formData.append("status", values.status);
+  formData.append("examiner_id", examinerId.value);
 
-  if (values.proposal_file instanceof File) {
-    formData.append("proposal_file", values.proposal_file);
-  } else if (typeof values.proposal_file === "string") {
-    formData.append("proposal_file", values.proposal_file);
+  if (values.exam_file instanceof File) {
+    formData.append("exam_file", values.exam_file);
+  } else if (typeof values.exam_file === "string") {
+    formData.append("exam_file", values.exam_file);
   }
   formData.append("_method", "PATCH");
 
-  const result = await updateTitle(titleId.value, formData);
-
+  const result = await updateExam(examId.value, formData);
   if (result.success) {
     toast({ description: result.message });
-    router.push("/title");
+    router.push("/exam");
   } else {
     toast({ description: result.message });
   }
@@ -150,28 +138,12 @@ const onSubmit = form.handleSubmit(async (values) => {
   <NuxtLayout>
     <div class="p-6">
       <CardContent class="w-full bg-white p-6 rounded-lg shadow-md">
-        <h2 class="text-2xl font-semibold mb-6">Edit Title</h2>
+        <h2 class="text-2xl font-semibold mb-6">Edit Exam</h2>
         <form
           @submit="onSubmit"
           class="grid grid-cols-1 md:grid-cols-2 gap-4"
           enctype="multipart/form-data"
         >
-          <!-- Title -->
-          <FormField v-slot="{ field }" name="title">
-            <FormItem>
-              <FormLabel>Title</FormLabel>
-              <FormControl>
-                <Input
-                  type="text"
-                  placeholder="Title"
-                  v-bind="field"
-                  class="w-full"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          </FormField>
-
           <!-- Supervisor -->
           <FormField v-slot="{ field }" name="supervisor_id">
             <FormItem>
@@ -188,7 +160,6 @@ const onSubmit = form.handleSubmit(async (values) => {
                       :value="lecturer.lecturer.id"
                     >
                       {{ lecturer.name }}
-                      <!-- Pastikan `name` sudah tersedia -->
                     </SelectItem>
                   </SelectContent>
                 </Select>
@@ -197,20 +168,33 @@ const onSubmit = form.handleSubmit(async (values) => {
             </FormItem>
           </FormField>
 
-          <!-- Abstract -->
-          <FormField v-slot="{ field }" name="abstract">
+          <!-- Examiner -->
+          <FormField v-slot="{ field }" name="examiner_id">
             <FormItem>
-              <FormLabel>Abstract</FormLabel>
+              <FormLabel>Examiner</FormLabel>
               <FormControl>
-                <TiptapEditor v-model="content" />
+                <Select v-model="examinerId">
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a Examiner" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem
+                      v-for="lecturer in lecturers"
+                      :key="lecturer.lecturer.id"
+                      :value="lecturer.lecturer.id"
+                    >
+                      {{ lecturer.name }}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
               </FormControl>
-              <FormMessage />
+              <FormMessage name="examiner_id" />
             </FormItem>
           </FormField>
 
-          <FormField v-slot="{ field }" name="proposal_file">
+          <FormField v-slot="{ field }" name="exam_file">
             <FormItem>
-              <FormLabel>Upload Proposal</FormLabel>
+              <FormLabel>Upload File PreSeminar</FormLabel>
               <FormControl>
                 <Input
                   type="file"
@@ -224,12 +208,12 @@ const onSubmit = form.handleSubmit(async (values) => {
               </p>
               <!-- Menampilkan file yang sudah ada -->
               <p
-                v-if="titleData && titleData.proposal_file"
+                v-if="preSeminarData && preSeminarData.pre_seminar_file"
                 class="text-sm text-gray-500 mt-1"
               >
                 📄 Existing file:
                 <a
-                  :href="titleData.proposal_file"
+                  :href="preSeminarData.pre_seminar_file"
                   target="_blank"
                   class="text-blue-600 hover:underline"
                 >
@@ -239,24 +223,6 @@ const onSubmit = form.handleSubmit(async (values) => {
               <FormMessage />
             </FormItem>
           </FormField>
-
-          <!-- Status -->
-          <FormField v-slot="{ field }" name="status">
-            <FormItem>
-              <FormLabel>Status</FormLabel>
-              <FormControl>
-                <select
-                  v-bind="field"
-                  class="w-full border border-gray-300 rounded-md p-2"
-                >
-                  <option value="draft">Draft</option>
-                  <option value="submitted">Submitted</option>
-                </select>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          </FormField>
-
           <!-- Submit Button -->
           <div class="col-span-1 md:col-span-2">
             <Button
